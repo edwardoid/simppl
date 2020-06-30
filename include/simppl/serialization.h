@@ -130,6 +130,11 @@ void decode(DBusMessageIter& iter, T1& t1, T&... t)
 
 class DecoderError : public std::exception
 {
+  public:
+  DecoderError(int expected, int actual);
+  virtual const char* what() const noexcept;
+  private:
+  std::string m_msg;
 };
 
 

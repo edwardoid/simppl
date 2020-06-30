@@ -76,6 +76,12 @@ struct ObjectPath
         return path != rhs.path;
     }
 
+    inline
+    bool empty() const
+    {
+        return path.empty() || path == "/";
+    }
+
     std::string path;
 };
 

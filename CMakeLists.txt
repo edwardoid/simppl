@@ -39,7 +39,7 @@ find_package(Threads REQUIRED)
 find_package(DBus REQUIRED)
 find_package(Boost)
 
-add_library(simppl SHARED
+add_library(${PROJECT_NAME} SHARED
     src/callstate.cpp
     src/dispatcher.cpp
     src/error.cpp
@@ -60,28 +60,29 @@ add_library(simppl SHARED
     src/bool.cpp
 )
 # Provide a namespaced alias
-add_library(Simppl::simppl ALIAS simppl)
+add_library(Simppl::simppl ALIAS ${PROJECT_NAME})
 
 if(HAVE_INTROSPECTION)
-    target_compile_definitions(simppl PUBLIC SIMPPL_HAVE_INTROSPECTION=1)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC SIMPPL_HAVE_INTROSPECTION=1)
 else()
-    target_compile_definitions(simppl PUBLIC SIMPPL_HAVE_INTROSPECTION=0)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC SIMPPL_HAVE_INTROSPECTION=0)
 endif()
 
-target_include_directories(simppl
+target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_options(simppl PRIVATE -Werror -Wall)
-target_link_libraries(simppl PUBLIC
+target_compile_options(${PROJECT_NAME} PRIVATE -Werror -Wall)
+target_link_libraries(${PROJECT_NAME} PUBLIC
     DBUS::DBUS
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-# Build a set of examples
-add_subdirectory(examples)
+if (SIMPPL_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
 
 if(SIMPPL_BUILD_TESTS AND BUILD_TESTING)
     add_subdirectory(tests)
@@ -93,32 +94,14 @@ endif()
 #
 if(SIMPPL_NOT_SUBPROJECT)
     include(GNUInstallDirs)
-    include(CMakePackageConfigHelpers)
 
-    install(TARGETS simppl
-        EXPORT simppl-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-    install(EXPORT simppl-targets
-        FILE SimpplTargets.cmake
-        NAMESPACE Simppl::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/simppl
-    )
+    install(TARGETS ${PROJECT_NAME} EXPORT simpplConfig
+        ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-    configure_package_config_file(cmake/SimpplConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/SimpplConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/simppl
-    )
-    write_basic_package_version_file(SimpplConfigVersion.cmake
-        VERSION ${PACKAGE_VERSION}
-        COMPATIBILITY
-            SameMajorVersion
-    )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SimpplConfig.cmake
-                  ${CMAKE_CURRENT_BINARY_DIR}/SimpplConfigVersion.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/simppl
-    )
+    install(EXPORT ${PROJECT_NAME}Config DESTINATION /usr/share/simppl/cmake)
 
+    export(TARGETS ${PROJECT_NAME} FILE simpplConfig.cmake)
 endif()

@@ -5,7 +5,6 @@
 
 #include <unistd.h>
 
-#include <iostream>
 #include <map>
 #include <set>
 #include <atomic>
@@ -16,6 +15,7 @@
 #include "simppl/string.h"
 #include "simppl/vector.h"
 
+#include <iostream>
 #define SIMPPL_DISPATCHER_CPP
 #include "simppl/serverside.h"
 #include "simppl/clientside.h"
@@ -377,6 +377,7 @@ struct Dispatcher::Private
     std::map<int, DBusTimeout*> tm_handlers_;
 
     std::multimap<std::string, StubBase*> stubs_;
+    std::multimap<std::string, StubBase*> paths_;
     std::map<std::string, int> signal_matches_;
 
     /// service registration's list
@@ -660,25 +661,23 @@ DBusHandlerResult Dispatcher::try_handle_signal(DBusMessage* msg)
 
         // here we expect that pathname is the same as busname, just with / instead of .
         char originator[256];
-        strncpy(originator, dbus_message_get_path(msg)+1, sizeof(originator));
+        
+	strncpy(originator, dbus_message_get_path(msg), sizeof(originator));
         originator[sizeof(originator)-1] = '\0';
 
-        char* p = originator;
-        while(*++p)
+
+        bool handled = false;
+        for(auto iter = d->stubs_.begin(); iter != d->stubs_.end(); ++iter)
         {
-           if (*p == '/')
-              *p = '.';
+            if (strcmp(iter->second->objectpath(), originator) == 0)
+            {
+                iter->second->try_handle_signal(msg);
+                handled = true;
+            }
         }
 
-        auto range = d->stubs_.equal_range(originator);
-        if (range.first != range.second)
-        {
-            std::for_each(range.first, range.second, [msg](auto& entry){
-                entry.second->try_handle_signal(msg);
-            });
+        if (handled) return DBUS_HANDLER_RESULT_HANDLED;
 
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
         // else
         //     nobody interested in signal - go on with other filters
     }

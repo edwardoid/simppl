@@ -27,11 +27,12 @@ void StringCodec::decode(DBusMessageIter& iter, std::string& str)
    
    if (c_str)
    {
-      std::cout << "Decoded: " << c_str << std::endl;
       str.assign(c_str);
    }
    else
+   {
       str.clear();
+   }
 }
 
 
@@ -54,7 +55,6 @@ void StringCodec::decode(DBusMessageIter& iter, char*& str)
    // FIXME trouble with allocated memory in case of exception
    if (c_str)
    {
-      std::cout << "Decoded: " << c_str << std::endl;
       str = (char*)new char[strlen(c_str)+1];
       strcpy(str, c_str);
    }

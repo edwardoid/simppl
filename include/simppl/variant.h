@@ -8,7 +8,6 @@
 #include <type_traits>
 #include <cstring>
 #include <cassert>
-#include <iostream>
 
 namespace simppl
 {
@@ -415,7 +414,6 @@ struct VariantDeserializer<T1, T...>
       std::string nestedTypeSignature = buf.str();
       if (!strcmp(buf.str().c_str(), sig))
       {
-	 std::cerr << __FILE__ << ":" << __LINE__ << " Trying deserialize as " << nestedTypeSignature << std::endl;
          v = T1();
          Codec<T1>::decode(iter, *v.template get<T1>());
 
@@ -440,13 +438,11 @@ struct VariantDeserializer<T>
       std::string nestedTypeSignature = buf.str();
       if (!strcmp(buf.str().c_str(), sig))
       {
-	 std::cerr << __FILE__ << ":" << __LINE__ << " Trying deserialize as " << nestedTypeSignature << std::endl;
          v = T();
          Codec<T>::decode(iter, *v.template get<T>());
 
          return true;
       }
-      std::cerr << __FILE__ << ":" << __LINE__ << " Can't deserialize as " << nestedTypeSignature << std::endl;
 
       // stop recursion
       return false;
